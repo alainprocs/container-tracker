@@ -1,151 +1,142 @@
+// Types for tracking data
+export interface TrackingEvent {
+  timestamp: string
+  location: string
+  description: string
+}
+
 export interface TrackingData {
   containerNumber: string
   status: string
+  currentLocation: string
   lastUpdated: string
-  currentLocation: {
-    port: string
-    country: string
-    coordinates?: {
-      latitude: number
-      longitude: number
-    }
-  }
-  estimatedArrival: string | null
-  vessel: {
-    name: string
-    imo: string
-  } | null
-  cargoType: string | null
-  trackingHistory: Array<{
-    timestamp: string
-    location: string
-    description: string
-  }>
+  estimatedArrival: string
+  vessel: string
+  destination: string
+  trackingHistory: TrackingEvent[]
 }
 
-// Mock API function - in a real app, this would call actual tracking APIs
+// Helper function to generate a random date within a range
+function randomDate(start: Date, end: Date): string {
+  const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+  return date.toISOString().split('T')[0]
+}
+
+// Helper function to generate a random time
+function randomTime(): string {
+  const hours = String(Math.floor(Math.random() * 24)).padStart(2, '0')
+  const minutes = String(Math.floor(Math.random() * 60)).padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+// Mock API function to track a container
 export async function trackContainer(containerNumber: string): Promise<TrackingData> {
-  // Simulate API call delay
-  await new Promise((resolve) => setTimeout(resolve, 1500))
-
-  // In a real implementation, this would call multiple APIs and handle failures
-  // For demo purposes, we're returning mock data
-
-  // Randomly fail sometimes to demonstrate error handling
-  if (Math.random() < 0.1) {
-    throw new Error("API request failed. Please try again.")
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1500))
+  
+  // Validate container number format
+  if (!/^[A-Z]{3}U[0-9]{7}$/.test(containerNumber)) {
+    throw new Error("Invalid container number format")
   }
-
-  // Generate mock data based on container number
-  return {
-    containerNumber,
-    status: getRandomStatus(),
-    lastUpdated: new Date().toISOString(),
-    currentLocation: {
-      port: getRandomPort(),
-      country: getRandomCountry(),
-      coordinates: {
-        latitude: Math.random() * 180 - 90,
-        longitude: Math.random() * 360 - 180,
-      },
-    },
-    estimatedArrival: getFutureDate(Math.floor(Math.random() * 30) + 1),
-    vessel: {
-      name: getRandomVesselName(),
-      imo: `${Math.floor(Math.random() * 10000000) + 1000000}`,
-    },
-    cargoType: getRandomCargoType(),
-    trackingHistory: generateTrackingHistory(),
+  
+  // Simulate API error for specific container numbers (for testing)
+  if (containerNumber === "TESUERROR") {
+    throw new Error("Container not found in our system")
   }
-}
-
-// Helper functions to generate mock data
-function getRandomStatus() {
-  const statuses = ["In Transit", "Customs", "Delivered", "Delayed", "Loading"]
-  return statuses[Math.floor(Math.random() * statuses.length)]
-}
-
-function getRandomPort() {
-  const ports = ["Rotterdam", "Singapore", "Shanghai", "Los Angeles", "Hamburg", "Busan", "Antwerp", "New York"]
-  return ports[Math.floor(Math.random() * ports.length)]
-}
-
-function getRandomCountry() {
-  const countries = ["Netherlands", "Singapore", "China", "USA", "Germany", "South Korea", "Belgium", "USA"]
-  return countries[Math.floor(Math.random() * countries.length)]
-}
-
-function getRandomVesselName() {
-  const prefixes = ["MSC", "MAERSK", "CMA CGM", "COSCO", "EVERGREEN", "OOCL"]
-  const names = ["ANTARES", "BEIJING", "COLUMBUS", "DESTINY", "EXPLORER", "FORTUNE", "GLORY", "HORIZON"]
-  return `${prefixes[Math.floor(Math.random() * prefixes.length)]} ${names[Math.floor(Math.random() * names.length)]}`
-}
-
-function getRandomCargoType() {
-  const types = ["General Cargo", "Dry Bulk", "Liquid Bulk", "Refrigerated Goods", "Hazardous Materials", null]
-  return types[Math.floor(Math.random() * types.length)]
-}
-
-function getFutureDate(daysAhead: number) {
-  const date = new Date()
-  date.setDate(date.getDate() + daysAhead)
-  return date.toISOString()
-}
-
-function generateTrackingHistory() {
-  const history = []
+  
+  // Generate random tracking data
   const now = new Date()
-
-  // Generate 3-6 random events
-  const eventCount = Math.floor(Math.random() * 4) + 3
-
-  for (let i = 0; i < eventCount; i++) {
-    const daysAgo = eventCount - i
-    const date = new Date()
-    date.setDate(now.getDate() - daysAgo)
-
-    history.push({
-      timestamp: date.toISOString(),
-      location: getRandomPort() + ", " + getRandomCountry(),
-      description: getRandomEvent(i, eventCount),
+  const twoMonthsAgo = new Date(now)
+  twoMonthsAgo.setMonth(now.getMonth() - 2)
+  
+  const oneMonthFromNow = new Date(now)
+  oneMonthFromNow.setMonth(now.getMonth() + 1)
+  
+  // Generate random tracking history
+  const historyCount = 3 + Math.floor(Math.random() * 5) // 3-7 events
+  const trackingHistory: TrackingEvent[] = []
+  
+  const ports = [
+    "Shanghai, China",
+    "Singapore",
+    "Rotterdam, Netherlands",
+    "Antwerp, Belgium",
+    "Los Angeles, USA",
+    "New York, USA",
+    "Hamburg, Germany",
+    "Busan, South Korea",
+    "Hong Kong, China",
+    "Dubai, UAE"
+  ]
+  
+  const vessels = [
+    "MSC Oscar",
+    "OOCL Hong Kong",
+    "CMA CGM Antoine de Saint Exupery",
+    "Maersk Mc-Kinney Moller",
+    "Ever Golden",
+    "HMM Algeciras",
+    "MOL Triumph"
+  ]
+  
+  const vessel = vessels[Math.floor(Math.random() * vessels.length)]
+  
+  // Create events from oldest to newest
+  for (let i = 0; i < historyCount; i++) {
+    const eventDate = new Date(twoMonthsAgo)
+    eventDate.setDate(twoMonthsAgo.getDate() + Math.floor((now.getTime() - twoMonthsAgo.getTime()) / (historyCount + 1) * i) / (1000 * 60 * 60 * 24))
+    
+    const port = ports[Math.floor(Math.random() * ports.length)]
+    
+    let description = ""
+    if (i === 0) {
+      description = "Container loaded onto vessel"
+    } else if (i === historyCount - 1) {
+      description = "Container arrived at port"
+    } else {
+      const events = [
+        "Container discharged from vessel",
+        "Container loaded onto vessel",
+        "Container in transit",
+        "Container cleared customs",
+        "Container departed from port"
+      ]
+      description = events[Math.floor(Math.random() * events.length)]
+    }
+    
+    trackingHistory.push({
+      timestamp: `${randomDate(eventDate, eventDate)} ${randomTime()}`,
+      location: port,
+      description
     })
   }
-
-  return history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-}
-
-function getRandomEvent(index: number, total: number) {
-  if (index === 0) {
-    return "Container departed from origin port"
-  } else if (index === total - 1) {
-    return "Container arrived at current location"
-  } else {
-    const events = [
-      "Container loaded onto vessel",
-      "Container discharged from vessel",
-      "Container cleared customs",
-      "Container in transit to next port",
-      "Container undergoing inspection",
-      "Container transferred to another vessel",
-    ]
-    return events[Math.floor(Math.random() * events.length)]
+  
+  // Sort history by timestamp (oldest first)
+  trackingHistory.sort((a, b) => {
+    return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  })
+  
+  // Determine current status
+  const statuses = ["In Transit", "At Port", "Customs Hold", "Delivered"]
+  const randomStatus = statuses[Math.floor(Math.random() * statuses.length)]
+  
+  // Current location is the location of the most recent event
+  const currentLocation = trackingHistory[trackingHistory.length - 1].location
+  
+  // Random destination that's different from current location
+  let destination
+  do {
+    destination = ports[Math.floor(Math.random() * ports.length)]
+  } while (destination === currentLocation)
+  
+  return {
+    containerNumber,
+    status: randomStatus,
+    currentLocation,
+    lastUpdated: `${randomDate(new Date(now.setDate(now.getDate() - 2)), now)} ${randomTime()}`,
+    estimatedArrival: randomDate(now, oneMonthFromNow),
+    vessel,
+    destination,
+    trackingHistory
   }
 }
-
-// In a real implementation, we would have functions to call multiple APIs
-// For example:
-/*
-async function tryMultipleAPIs(containerNumber: string) {
-  try {
-    return await callPrimaryAPI(containerNumber)
-  } catch (error) {
-    console.log("Primary API failed, trying secondary API")
-    try {
-      return await callSecondaryAPI(containerNumber)
-    } catch (secondError) {
-      console.log("Secondary API failed, trying tertiary API")
-      return await callTertiaryAPI(containerNumber)
-    }
-  }
-}
-*/
